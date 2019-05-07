@@ -11,17 +11,17 @@ A [Go](https://golang.org/) TCP server (and client) implementation, optimised fo
 Server:
 
 ```go
-# define a handler
+// define a handler
 echoHandler := quasizero.HandlerFunc(func(req *quasizero.Request) (*quasizero.Response, error) {
   return &quasizero.Response{Payload: req.Payload}, nil
 })
 
-# init a server
+// init a server
 srv := quasizero.NewServer(map[int32]quasizero.Handler{
   1: echoHandler,
 }, nil)
 
-# listen and serve
+// listen and serve
 lis, err := net.Listen("tcp", ":11111")
 if err != nil {
   // handle error ...
