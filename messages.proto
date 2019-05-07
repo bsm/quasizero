@@ -1,0 +1,25 @@
+syntax = "proto3";
+package blacksquaremedia.quasizero;
+option go_package = "quasizero";
+
+message Request {
+  // Request/command code.
+  int32 code = 1;
+
+  // Custom metadata.
+  map<string, string> metadata = 2;
+
+  // Raw payload.
+  bytes payload = 3;
+}
+
+message Response {
+  // Optional client error.
+  string client_error = 1;
+
+  // Custom metadata.
+  map<string, string> metadata = 2;
+
+  // Raw payload.
+  bytes payload = 3;
+}
