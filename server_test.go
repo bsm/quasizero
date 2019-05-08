@@ -75,9 +75,13 @@ var _ = Describe("Server", func() {
 		Expect(err).NotTo(HaveOccurred())
 		defer c2.Close()
 
-		Expect(c1.Call(&quasizero.Request{Code: 1})).To(Equal(&quasizero.Response{Payload: []byte("PONG")}))
+		Expect(c1.Call(&quasizero.Request{
+			Code: 1,
+		})).To(Equal(&quasizero.Response{Payload: []byte("PONG")}))
 		Expect(c1.Close()).To(Succeed())
-		Expect(c2.Call(&quasizero.Request{Code: 1})).To(Equal(&quasizero.Response{Payload: []byte("PONG")}))
+		Expect(c2.Call(&quasizero.Request{
+			Code: 1,
+		})).To(Equal(&quasizero.Response{Payload: []byte("PONG")}))
 	})
 
 	It("should handle invalid commands", func() {
@@ -121,6 +125,7 @@ func BenchmarkServer(b *testing.B) {
 		} else if len(res.Payload) != 4 {
 			b.Fatalf("expected PONG but got %s", res.Payload)
 		}
+		res.Release()
 	}
 }
 
@@ -158,6 +163,6 @@ func BenchmarkServer_Pipeline(b *testing.B) {
 		} else if len(res) != 10 {
 			b.Fatalf("expected 10xPONG but got %v", res)
 		}
-
+		res.Release()
 	}
 }

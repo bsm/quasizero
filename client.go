@@ -58,7 +58,7 @@ func (c *Client) Call(req *Request) (*Response, error) {
 		return nil, err
 	}
 
-	res := new(Response)
+	res := fetchResponse()
 	if err := pc.r.ReadMsg(res); err != nil {
 		return nil, err
 	}
@@ -67,22 +67,22 @@ func (c *Client) Call(req *Request) (*Response, error) {
 
 // Pipeline can execute commands.
 type Pipeline struct {
-	c *Client
-	r []*Request
+	c    *Client
+	reqs []*Request
 }
 
 // Call adds a call to the pipeline.
 func (p *Pipeline) Call(req *Request) {
-	p.r = append(p.r, req)
+	p.reqs = append(p.reqs, req)
 }
 
 // Reset resets the pipeline.
 func (p *Pipeline) Reset() {
-	p.r = p.r[:0]
+	p.reqs = p.reqs[:0]
 }
 
 // Exec executes the pipeline and returns responses.
-func (p *Pipeline) Exec() ([]*Response, error) {
+func (p *Pipeline) Exec() (ResponseBatch, error) {
 	cn, err := p.c.cns.Get()
 	if err != nil {
 		return nil, err
@@ -90,7 +90,7 @@ func (p *Pipeline) Exec() ([]*Response, error) {
 	pc := cn.(*protoConn)
 	defer p.c.cns.Put(pc)
 
-	for _, req := range p.r {
+	for _, req := range p.reqs {
 		if err := pc.w.WriteMsg(req); err != nil {
 			return nil, err
 		}
@@ -100,9 +100,9 @@ func (p *Pipeline) Exec() ([]*Response, error) {
 		return nil, err
 	}
 
-	rs := make([]*Response, 0, len(p.r))
-	for range p.r {
-		res := new(Response)
+	rs := make(ResponseBatch, 0, len(p.reqs))
+	for range p.reqs {
+		res := fetchResponse()
 		if err := pc.r.ReadMsg(res); err != nil {
 			return nil, err
 		}

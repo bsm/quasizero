@@ -20,17 +20,19 @@ func Example() {
 	// define command map
 	cmds := map[int32]quasizero.Handler{
 		// ECHO
-		1: quasizero.HandlerFunc(func(req *quasizero.Request) (*quasizero.Response, error) {
-			return &quasizero.Response{Payload: req.Payload}, nil
+		1: quasizero.HandlerFunc(func(req *quasizero.Request, res *quasizero.Response) error {
+			res.Set(req.Payload)
+			return nil
 		}),
 
 		// SHUTDOWN
-		9: quasizero.HandlerFunc(func(req *quasizero.Request) (*quasizero.Response, error) {
+		9: quasizero.HandlerFunc(func(req *quasizero.Request, res *quasizero.Response) error {
 			go func() {
 				time.Sleep(time.Second)
 				_ = lis.Close()
 			}()
-			return &quasizero.Response{Payload: []byte("OK")}, nil
+			res.SetString("OK")
+			return nil
 		}),
 	}
 
