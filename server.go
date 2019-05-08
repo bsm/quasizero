@@ -1,7 +1,6 @@
 package quasizero
 
 import (
-	"fmt"
 	"net"
 	"time"
 )
@@ -78,6 +77,9 @@ func (s *Server) serveClient(c *protoConn) {
 	// close client on exit
 	defer c.Close()
 
+	// init message pair
+	req, res := new(Request), new(Response)
+
 	for {
 		// set deadline
 		if d := s.cf.Timeout; d > 0 {
@@ -85,7 +87,7 @@ func (s *Server) serveClient(c *protoConn) {
 		}
 
 		// perform pipeline
-		if err := s.pipeline(c); err != nil {
+		if err := s.pipeline(c, req, res); err != nil {
 			if s.cf.OnError != nil {
 				s.cf.OnError(err)
 			}
@@ -94,15 +96,15 @@ func (s *Server) serveClient(c *protoConn) {
 	}
 }
 
-func (s *Server) pipeline(c *protoConn) error {
+func (s *Server) pipeline(c *protoConn, req *Request, res *Response) error {
 	for more := true; more; more = c.r.Buffered() > 0 {
-		req := new(Request)
+		req.reuse()
 		if err := c.r.ReadMsg(req); err != nil {
 			return err
 		}
 
-		res, err := s.process(req)
-		if err != nil {
+		res.reuse()
+		if err := s.process(req, res); err != nil {
 			return err
 		}
 
@@ -113,12 +115,11 @@ func (s *Server) pipeline(c *protoConn) error {
 	return c.w.Flush()
 }
 
-func (s *Server) process(req *Request) (*Response, error) {
+func (s *Server) process(req *Request, res *Response) error {
 	if handler, ok := s.hs[req.Code]; ok {
-		return handler.ServeQZ(req)
+		return handler.ServeQZ(req, res)
 	}
 
-	return &Response{
-		ClientError: fmt.Sprintf("unknown command code %d", req.Code),
-	}, nil
+	res.SetErrorf("unknown command code %d", req.Code)
+	return nil
 }

@@ -13,12 +13,14 @@ func TestSuite(t *testing.T) {
 	RunSpecs(t, "quasizero")
 }
 
-func pongHandler(_ *quasizero.Request) (*quasizero.Response, error) {
-	return &quasizero.Response{Payload: []byte("PONG")}, nil
+func pongHandler(_ *quasizero.Request, res *quasizero.Response) error {
+	res.SetString("PONG")
+	return nil
 }
 
-func echoHandler(req *quasizero.Request) (*quasizero.Response, error) {
-	return &quasizero.Response{Payload: req.Payload}, nil
+func echoHandler(req *quasizero.Request, res *quasizero.Response) error {
+	res.Set(req.Payload)
+	return nil
 }
 
 var commandMap = map[int32]quasizero.Handler{
