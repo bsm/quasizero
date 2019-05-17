@@ -42,7 +42,14 @@ func (m *Response) SetString(data string) {
 
 // SetErrorf sets a formatted error message.
 func (m *Response) SetErrorf(msg string, args ...interface{}) {
-	m.ClientError = fmt.Sprintf(msg, args...)
+	m.ErrorMessage = fmt.Sprintf(msg, args...)
+}
+
+// SetError sets an error.
+func (m *Response) SetError(err error) {
+	if err != nil {
+		m.ErrorMessage = err.Error()
+	}
 }
 
 // SetMeta sets a key/value metadata pair.

@@ -13,12 +13,16 @@ import (
 
 var _ = Describe("Server", func() {
 	var subject *quasizero.Server
+	var client *quasizero.Client
 	var lis net.Listener
 	var ctx = context.Background()
 
 	BeforeEach(func() {
 		var err error
 		lis, err = net.Listen("tcp", "127.0.0.1:0")
+		Expect(err).NotTo(HaveOccurred())
+
+		client, err = quasizero.NewClient(ctx, lis.Addr().String(), nil)
 		Expect(err).NotTo(HaveOccurred())
 
 		config := &quasizero.ServerConfig{Timeout: 100 * time.Millisecond}
@@ -30,30 +34,23 @@ var _ = Describe("Server", func() {
 	})
 
 	AfterEach(func() {
+		Expect(client.Close()).To(Succeed())
 		Expect(lis.Close()).To(Succeed())
 	})
 
 	It("should handle commands", func() {
-		c, err := quasizero.NewClient(ctx, lis.Addr().String(), nil)
-		Expect(err).NotTo(HaveOccurred())
-		defer c.Close()
-
-		Expect(c.Call(&quasizero.Request{
+		Expect(client.Call(&quasizero.Request{
 			Code: 1,
 		})).To(Equal(&quasizero.Response{Payload: []byte("PONG")}))
 
-		Expect(c.Call(&quasizero.Request{
+		Expect(client.Call(&quasizero.Request{
 			Code:    2,
 			Payload: []byte("HeLLo"),
 		})).To(Equal(&quasizero.Response{Payload: []byte("HeLLo")}))
 	})
 
 	It("should handle pipelines", func() {
-		c, err := quasizero.NewClient(ctx, lis.Addr().String(), nil)
-		Expect(err).NotTo(HaveOccurred())
-		defer c.Close()
-
-		p := c.Pipeline()
+		p := client.Pipeline()
 		for i := 0; i < 147; i++ {
 			p.Call(&quasizero.Request{Code: 1})
 		}
@@ -67,31 +64,29 @@ var _ = Describe("Server", func() {
 	})
 
 	It("should handle multiple clients", func() {
-		c1, err := quasizero.NewClient(ctx, lis.Addr().String(), nil)
+		clienx, err := quasizero.NewClient(ctx, lis.Addr().String(), nil)
 		Expect(err).NotTo(HaveOccurred())
-		defer c1.Close()
+		defer clienx.Close()
 
-		c2, err := quasizero.NewClient(ctx, lis.Addr().String(), nil)
-		Expect(err).NotTo(HaveOccurred())
-		defer c2.Close()
-
-		Expect(c1.Call(&quasizero.Request{
+		Expect(client.Call(&quasizero.Request{
 			Code: 1,
 		})).To(Equal(&quasizero.Response{Payload: []byte("PONG")}))
-		Expect(c1.Close()).To(Succeed())
-		Expect(c2.Call(&quasizero.Request{
+		Expect(client.Close()).To(Succeed())
+		Expect(clienx.Call(&quasizero.Request{
 			Code: 1,
 		})).To(Equal(&quasizero.Response{Payload: []byte("PONG")}))
 	})
 
 	It("should handle invalid commands", func() {
-		c, err := quasizero.NewClient(ctx, lis.Addr().String(), nil)
-		Expect(err).NotTo(HaveOccurred())
-		defer c.Close()
-
-		Expect(c.Call(&quasizero.Request{
+		Expect(client.Call(&quasizero.Request{
 			Code: 99,
-		})).To(Equal(&quasizero.Response{ClientError: "unknown command code 99"}))
+		})).To(Equal(&quasizero.Response{ErrorMessage: "unknown command code 99"}))
+	})
+
+	It("should handle failures", func() {
+		Expect(client.Call(&quasizero.Request{
+			Code: 3,
+		})).To(Equal(&quasizero.Response{ErrorMessage: "something went wrong"}))
 	})
 })
 

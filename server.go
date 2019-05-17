@@ -1,6 +1,7 @@
 package quasizero
 
 import (
+	"fmt"
 	"net"
 	"time"
 )
@@ -105,7 +106,7 @@ func (s *Server) pipeline(c *protoConn, req *Request, res *Response) error {
 
 		res.reuse()
 		if err := s.process(req, res); err != nil {
-			return err
+			res.SetError(err)
 		}
 
 		if err := c.w.WriteMsg(res); err != nil {
@@ -119,7 +120,5 @@ func (s *Server) process(req *Request, res *Response) error {
 	if handler, ok := s.hs[req.Code]; ok {
 		return handler.ServeQZ(req, res)
 	}
-
-	res.SetErrorf("unknown command code %d", req.Code)
-	return nil
+	return fmt.Errorf("unknown command code %d", req.Code)
 }

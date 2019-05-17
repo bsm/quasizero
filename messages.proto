@@ -14,8 +14,8 @@ message Request {
 }
 
 message Response {
-  // Optional client error.
-  string client_error = 1;
+  // Optional error message.
+  string error_message = 1;
 
   // Custom metadata.
   map<string, string> metadata = 2;

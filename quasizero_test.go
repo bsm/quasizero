@@ -1,6 +1,7 @@
 package quasizero_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/bsm/quasizero"
@@ -23,7 +24,12 @@ func echoHandler(req *quasizero.Request, res *quasizero.Response) error {
 	return nil
 }
 
+func failingHandler(req *quasizero.Request, res *quasizero.Response) error {
+	return fmt.Errorf("something went wrong")
+}
+
 var commandMap = map[int32]quasizero.Handler{
 	1: quasizero.HandlerFunc(pongHandler),
 	2: quasizero.HandlerFunc(echoHandler),
+	3: quasizero.HandlerFunc(failingHandler),
 }
