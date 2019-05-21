@@ -13,6 +13,15 @@ func (m *Request) SetMeta(key, value string) {
 	m.Metadata[key] = value
 }
 
+// GetMeta returns value for a key.
+func (m *Request) GetMeta(key string) (string, bool) {
+	if m.Metadata != nil {
+		val, ok := m.Metadata[key]
+		return val, ok
+	}
+	return "", false
+}
+
 func (m *Request) reuse() {
 	*m = Request{Payload: m.Payload[:0]}
 }
@@ -58,6 +67,15 @@ func (m *Response) SetMeta(key, value string) {
 		m.Metadata = make(map[string]string, 1)
 	}
 	m.Metadata[key] = value
+}
+
+// GetMeta returns value for a key.
+func (m *Response) GetMeta(key string) (string, bool) {
+	if m.Metadata != nil {
+		val, ok := m.Metadata[key]
+		return val, ok
+	}
+	return "", false
 }
 
 // Release releases the message and returns it to the memory pool.
